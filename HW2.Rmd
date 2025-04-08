@@ -1,0 +1,110 @@
+---
+title: "HW 2B"
+output: html_document
+date: "2025-04-08"
+---
+Use the Louvain and Leiden algorithm , and present a plot of both results. Which one should be chosen?
+
+The Leiden algorithm should be chosen as it has a higher modualarity value and indicates better community detection. You can also see a slight difference in the plots - the fact that the red area is greater in the second plot demonstrates better community detection.
+
+```{r peru}
+library(igraph)
+library(readxl)
+
+rm(list = ls()) # clear memory
+
+GitLink='https://raw.githubusercontent.com/Comp-Soc-Science-Methods/HW2/refs/heads/main/MyGraphs/case1.graphml'
+
+# Get network
+peru=read_graph(GitLink,format='graphml')
+summary(peru)
+
+V(peru)$name=V(peru)$id 
+
+# Plotting Louvain results
+set.seed(111)
+
+peru_lv <- cluster_louvain(peru)
+plot(peru_lv, peru,
+     layout = layout_with_kk,
+     main ="Louvain Solution")
+
+modularity(peru, membership(peru_lv), directed=FALSE)
+
+# Plotting Leiden results
+peru_ld <- cluster_leiden(peru)
+set.seed(123)
+peru_ld_mod <- cluster_leiden(peru,
+                              objective_function = "modularity")
+
+plot(peru_ld_mod, peru,
+     layout = layout_with_kk,
+     main="Leiden Solution Using Modularity")
+
+modularity(peru, membership(peru_ld_mod))
+```
+
+Use the Seattle graph, and prepare a code in R to answer:
+Use the Louvain and Leiden algorithm. Did any of them work?
+If it did not work, choose two other algorithms, and plot the result. Which one should be chosen from the two algorithms you chose?
+
+The Louvain and Leiden algorithms do not work with directed graphs, so I've chosen to use Girvan-Newmann and infomap. Girvan-Newmann is the more useful algorithm in this case, as it produces a higher modualirty value and indicates more community connectedness visually (ex. green area).
+
+```{r seattle}
+GitLink_2='https://raw.githubusercontent.com/Comp-Soc-Science-Methods/HW2/refs/heads/main/MyGraphs/case2.graphml'
+
+# Get network
+sea=read_graph(GitLink_2,format='graphml')
+V(sea)$name=V(sea)$id 
+sea_giant=CINNA::giant_component_extract(sea)[[1]]
+summary(sea_giant)
+
+# Plotting Girvan-Newmann
+set.seed(333)
+sea_gn <- cluster_edge_betweenness(sea_giant,directed = T)
+plot(sea_gn, sea,
+     layout = layout_with_kk,
+     main="Girvan-Newmann Solution")
+modularity(sea_giant, membership(sea_gn))
+
+# Plotting infomap
+sea_im <- cluster_infomap(sea_giant)
+plot(sea_im, sea,
+     layout = layout_nicely, vertex.label.cex=0.5,
+     main="Infomap Solution")
+modularity(sea_giant, membership(sea_im))
+```
+
+Use the Fifa graph, projecting only the countries (network of countries), and report:
+Use the Girvan-Newman and Leiden algorithm, and present a plot of both results. Which one should be chosen?
+
+The Leiden algorithm should defnitely be chosen in this case. Again, visually and through the modularity value (higher than Girvan-Newmann), you can get a better read for community connectedness.
+```{r fifa}
+GitLink_3='https://raw.githubusercontent.com/Comp-Soc-Science-Methods/HW2/refs/heads/main/MyGraphs/country_projection.graphml'
+
+# Get network
+fifa=read_graph(GitLink_3,format='graphml')
+V(fifa)$name=V(fifa)$id
+summary(fifa)
+
+# Plotting Girvan-Newmann
+set.seed(123)
+fifa_gn <- cluster_edge_betweenness(fifa,directed = F)
+plot(fifa_gn, fifa,
+     layout = layout_with_kk,
+     main = "Girvan-Newmann Solution")
+
+modularity(fifa, membership(fifa_gn))
+
+# Plotting Leiden
+fifa_ld <- cluster_leiden(fifa)
+set.seed(123)
+fifa_ld_mod <- cluster_leiden(fifa,
+                              objective_function = "modularity")
+
+plot(fifa_ld_mod, fifa,
+     layout = layout_with_kk,
+     main="Leiden Solution Using Modularity")
+
+modularity(fifa, membership(fifa_ld_mod))
+```
